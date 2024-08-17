@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moon Clicking Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #000000;
+            font-family: Arial, sans-serif;
+            color: rgb(255, 253, 253);
+        }
+        
+        #stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+        
+        .star {
+            position: absolute;
+            background-color: rgb(255, 255, 255);
+            border-radius: 50%;
+        }
+        
+        #status {
+            position: absolute;
+            top: 20px;
+            font-size: 24px;
+            font-family: 'Orbitron', sans-serif;
+            text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+            letter-spacing: 3px;
+        }
+        
+        #score {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        
+        #moon-container {
+            width: 200px;
+            height: 200px;
+            position: relative;
+        }
+        
+        #moon {
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(circle, #ffffff 0%, #f0f0f0 50%, #e0e0e0 100%);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: box-shadow 0.3s;
+            box-shadow: 0 0 20px 5px rgba(87, 43, 43, 0.7);
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        #moon:hover {
+            box-shadow: 0 0 30px 10px rgba(255, 237, 77, 0.9);
+        }
+        
+        #moon.disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        #progress-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        #progress-bar {
+            width: 200px;
+            height: 20px;
+            background-color: #333;
+            margin-top: 10px;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+        
+        #progress {
+            width: 100%;
+            height: 100%;
+            background-color: rgb(179, 255, 0);
+            transition: width 0.5s;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="stars"></div>
+    <div id="status">OFF</div>
+    <div id="score">$ 0</div>
+    <div id="moon-container">
+        <div id="moon"></div>
+    </div>
+    <div id="progress-container">
+        <div id="progress-text">500/500</div>
+        <div id="progress-bar">
+            <div id="progress"></div>
+        </div>
+    </div>
+
+    <script>
+        const moonContainer = document.getElementById('moon-container');
+        const moon = document.getElementById('moon');
+        const scoreDisplay = document.getElementById('score');
+        const progressText = document.getElementById('progress-text');
+        const progressBar = document.getElementById('progress');
+        const status = document.getElementById('status');
+        const starsContainer = document.getElementById('stars');
+
+        let score = 0;
+        let progress = 500;
+
+        function updateScore() {
+            scoreDisplay.textContent = `$ ${score}`;
+        }
+
+        function updateProgress() {
+            progressText.textContent = `${progress}/500`;
+            progressBar.style.width = `${(progress / 500) * 100}%`;
+
+            if (progress < 10) {
+                moon.classList.add('disabled');
+            } else {
+                moon.classList.remove('disabled');
+            }
+        }
+
+        moonContainer.addEventListener('click', (event) => {
+            const rect = moon.getBoundingClientRect();
+            const x = event.clientX - rect.left - rect.width / 2;
+            const y = event.clientY - rect.top - rect.height / 2;
+            const distance = Math.sqrt(x * x + y * y);
+
+            if (distance <= rect.width / 2 && progress >= 10) {
+                score++;
+                progress = Math.max(0, progress - 1);
+                updateScore();
+                updateProgress();
+
+                // Add a pulse effect when clicked
+                moon.style.boxShadow = '0 0 50px 15px rgba(255, 255, 255, 1)';
+                setTimeout(() => {
+                    moon.style.boxShadow = '0 0 20px 5px rgba(255, 255, 255, 0.7)';
+                }, 200);
+            }
+        });
+
+        // Create moving stars
+        function createStar() {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.width = `${Math.random() * 2 + 1}px`;
+            star.style.height = star.style.width;
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+            star.style.animationDuration = `${Math.random() * 50 + 50}s`;
+            starsContainer.appendChild(star);
+
+            // Move the star
+            let posX = parseFloat(star.style.left);
+            let posY = parseFloat(star.style.top);
+            const moveX = (Math.random() - 0.5) * 0.1;
+            const moveY = (Math.random() - 0.5) * 0.1;
+
+            function moveStar() {
+                posX += moveX;
+                posY += moveY;
+                if (posX < 0) posX = 100;
+                if (posX > 100) posX = 0;
+                if (posY < 0) posY = 100;
+                if (posY > 100) posY = 0;
+                star.style.left = `${posX}%`;
+                star.style.top = `${posY}%`;
+                requestAnimationFrame(moveStar);
+            }
+            moveStar();
+        }
+
+        // Create multiple stars
+        for (let i = 0; i < 100; i++) {
+            createStar();
+        }
+
+        // Increment progress every second
+        setInterval(() => {
+            if (progress < 500) {
+                progress = Math.min(500, progress + 1);
+                updateProgress();
+            }
+        }, 1000);
+
+        updateScore();
+        updateProgress();
+    </script>
+</body>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glass Navigation Bar</title>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+        
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: rgb(255, 255, 255);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-item:hover,
+        .nav-item.active {
+            color: #ffffff;
+            transform: scale(1.1);
+        }
+        
+        .nav-item svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
+        }
+        
+        .nav-item span {
+            font-size: 12px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Main content area -->
+        <div style="height: 100%; padding-bottom: 80px;"></div>
+
+        <!-- Navigation bar -->
+        <nav class="nav-bar">
+            <a href="#" class="nav-item" data-name="Home">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span>Home</span>
+            </a>
+            <a href="tasks" class="nav-item" data-name="Tasks">
+                <svg xmlns="https://barzan1388.github.io/Kopplg/" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                <span>Tasks</span>
+            </a>
+            <a href="friend" class="nav-item" data-name="Friend">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <span>Friend</span>
+            </a>
+            <a href="wallet" class="nav-item" data-name="Wallet">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+                <span>Wallet</span>
+            </a>
+        </nav>
+    </div>
+
+    <script>
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                const pageName = this.getAttribute('href');
+                if (pageName !== '#') {
+                    window.location.href = `${window.location.origin}/${pageName}`;
+                    console.log(`Navigated to ${pageName}`);
+                } else {
+                    console.log('Stayed on Home page');
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
